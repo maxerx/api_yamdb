@@ -15,3 +15,4 @@ class User(AbstractUser):
             choices=ROLES,
             default='user'
         )
+    email = models.EmailField('email address', blank=False)

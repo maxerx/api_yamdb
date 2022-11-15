@@ -2,87 +2,7 @@ from django.db import models
 
 # Create your models here.
 
-# Вариант 1 class Review
-class Review(models.Model):
-    title = models.ForeignKey(
-        Title,
-        on_delete=models.CASCADE,
-        related_name='reviews',
-        verbose_name='произведение'
-    )
-    text = models.CharField(
-        max_length=200
-    )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='reviews',
-        verbose_name='автор'
-    )
-    score = models.IntegerField(
-        'оценка',
-        validators=(
-            MinValueValidator(1),
-            MaxValueValidator(10)
-        ),
-        error_messages={'validators': 'Оценка от 1 до 10 баллов'}
-    )
-    pub_date = models.DateTimeField(
-        'дата публикации',
-        auto_now_add=True,
-        db_index=True
-    )
-
-    class Meta:
-        verbose_name = 'Отзыв'
-        verbose_name_plural = 'Отзывы'
-        constraints = [
-            models.UniqueConstraint(
-                fields=('title', 'author', ),
-                name='unique review'
-            )]
-        ordering = ('pub_date',)
-
-    def __str__(self):
-        return self.text
-
-
-class Comment(models.Model):
-    review = models.ForeignKey(
-        Review,
-        on_delete=models.CASCADE,
-        related_name='comments',
-        verbose_name='отзыв'
-    )
-    text = models.CharField(
-        'текст комментария',
-        max_length=200
-    )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='comments',
-        verbose_name='автор'
-    )
-    pub_date = models.DateTimeField(
-        'дата публикации',
-        auto_now_add=True,
-        db_index=True
-    )
-
-    class Meta:
-        verbose_name = 'Комментарий'
-        verbose_name_plural = 'Комментарии'
-
-    def __str__(self):
-        return self.text
-
-
-
-
-
-# Вариант 2 и не он нравится больше - есть общий кусок кода и от него идут сателиты 
-class General_ModelReviewComments(models.Model):
+class General_Model_Review_Comments(models.Model):
     """Общая модель для Review и Comments."""
     text = models.CharField(max_length=256)
     pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
@@ -100,13 +20,13 @@ class General_ModelReviewComments(models.Model):
         return self.text[30]
 
 
-class Review(General_ModelReviewComments):
+class Review(General_Model_Review_Comments):
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
         verbose_name='Произведение',
     )
-    score = models.PositiveSmallIntegerField(
+    score = models.IntegerField(
         'Оценка',
         default=1,
         validators=[
@@ -117,7 +37,7 @@ class Review(General_ModelReviewComments):
         ],
     )
 
-    class Meta(General_ModelReviewComments.Meta):
+    class Meta(General_Model_Review_Comments.Meta):
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
         default_related_name = 'reviews'
@@ -129,19 +49,17 @@ class Review(General_ModelReviewComments):
         ]
 
 
-class Comments(General_ModelReviewComments):
+class Comments(General_Model_Review_Comments):
     review = models.ForeignKey(
         Review,
         on_delete=models.CASCADE,
         verbose_name='Отзыв',
     )
 
-    class Meta(General_ModelReviewComments.Meta):
+    class Meta(General_Model_Review_Comments.Meta):
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
         default_related_name = "comments"
 
     def __str__(self):
         return self.text[30]
-
-

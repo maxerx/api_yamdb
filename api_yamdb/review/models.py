@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from reviews.validators import validator_title_year
+from django.core.validators import MaxValueValidator, MinValueValidator
+from .validators import validator_title_year
 
 class User(AbstractUser):
     ROLES = (
@@ -17,6 +18,66 @@ class User(AbstractUser):
             default='user'
         )
     email = models.EmailField('email address', blank=False)
+
+    class Meta:
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
+
+
+class Category(models.Model):
+    name = models.CharField(max_length=20, verbose_name="Название")
+    slug = models.SlugField(unique=True, verbose_name= "Адрес")
+
+    class Meta:
+        verbose_name = "Категория"
+        verbose_name_plural = "Категории"
+
+    def __str__(self):
+        return self.name
+
+
+
+class Genre(models.Model):
+    name = models.CharField(max_length=20, verbose_name= "Название")
+    slug = models.SlugField(unique=True, blank=True, verbose_name= "Адрес")
+
+    class Meta:
+        verbose_name = "Жанр"
+        verbose_name_plural = "Жанры"
+
+    def __str__(self):
+        return self.name
+
+
+class Title(models.Model):
+    name = models.CharField(max_length=20, verbose_name="Название")
+    year = models.IntegerField(
+        db_index=True, validators=[validator_title_year,]
+    )
+    description = models.TextField(blank=True, verbose_name="Описание")
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="titles",
+        verbose_name="Категория",
+    )
+    genre = models.ManyToManyField(
+        Genre,
+        related_name="titles",
+        related_query_name="query_titles",
+        verbose_name="Жанр",
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = "Произведение"
+        verbose_name_plural = "Произведения"
+
+    def __str__(self):
+        return self.name
+
 
 class General_Model_Review_Comments(models.Model):
     """Общая модель для Review и Comments."""
@@ -79,55 +140,4 @@ class Comments(General_Model_Review_Comments):
     def __str__(self):
         return self.text[30]
 
-class Category(models.Model):
-    name = models.CharField(max_length=20, verbose_name="Название")
-    slug = models.SlugField(unique=True, verbose_name= "Адрес")
 
-    class Meta:
-        verbose_name = "Категория"
-        verbose_name_plural = "Категории"
-
-    def __str__(self):
-        return self.name
-
-
-class Genre(models.Model):
-    name = models.CharField(max_length=20, verbose_name= "Название")
-    slug = models.SlugField(unique=True, blank=True, verbose_name= "Адрес")
-
-    class Meta:
-        verbose_name = "Жанр"
-        verbose_name_plural = "Жанры"
-
-    def __str__(self):
-        return self.name
-
-
-class Title(models.Model):
-    name = models.CharField(max_length=20, verbose_name="Название")
-    year = models.IntegerField(
-        db_index=True, validators=[validator_title_year,]
-    )
-    description = models.TextField(blank=True, verbose_name="Описание")
-    category = models.ForeignKey(
-        Category,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        related_name="titles",
-        verbose_name="Категория",
-    )
-    genre = models.ManyToManyField(
-        Genre,
-        related_name="titles",
-        related_query_name="query_titles",
-        verbose_name="Жанр",
-        blank=True,
-    )
-
-    class Meta:
-        verbose_name = "Произведение"
-        verbose_name_plural = "Произведения"
-
-    def __str__(self):
-        return self.name

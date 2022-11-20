@@ -25,7 +25,7 @@ class User(AbstractUser):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=20, verbose_name="Название")
+    name = models.CharField(max_length=200, verbose_name="Название")
     slug = models.SlugField(unique=True, verbose_name= "Адрес")
 
     class Meta:
@@ -38,7 +38,7 @@ class Category(models.Model):
 
 
 class Genre(models.Model):
-    name = models.CharField(max_length=20, verbose_name= "Название")
+    name = models.CharField(max_length=200, verbose_name= "Название")
     slug = models.SlugField(unique=True, blank=True, verbose_name= "Адрес")
 
     class Meta:
@@ -50,7 +50,7 @@ class Genre(models.Model):
 
 
 class Title(models.Model):
-    name = models.CharField(max_length=20, verbose_name="Название")
+    name = models.CharField(max_length=200, verbose_name="Название")
     year = models.IntegerField(
         db_index=True, validators=[validator_title_year,]
     )

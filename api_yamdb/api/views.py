@@ -2,12 +2,17 @@ from django.shortcuts import render
 from django.core.mail import EmailMessage
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework.views import APIView
-from rest_framework import permissions, status
+from rest_framework import permissions, status, viewsets
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.response import Response
+from rest_framework.filters import SearchFilter
 
-from review.models import User
-from .serializers import SignUpSerializer, GetTokenSerializer
+from api.permissions import IsAdminUserOrReadOnly
+from review.models import User, Category, Genre, Title
+from api.serializers import (GenreSerializer, CategorySerializer,
+                             TitleSerializer, SignUpSerializer, GetTokenSerializer)
+
+
 
 class APIGetToken(APIView):
 
@@ -63,3 +68,27 @@ class APISignup(APIView):
         }
         self.send_email(data)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class GenreViewSet(viewsets.ModelViewSet):
+    quereset = Genre.objects.all()
+    serializer_class = GenreSerializer
+    permission_classes = (IsAdminUserOrReadOnly,)
+    filter_backends = (SearchFilter,)
+    search_fields = ('name', )
+
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    quereset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = (IsAdminUserOrReadOnly,)
+    filter_backends = (SearchFilter,)
+    search_fields = ('name', )
+
+
+class TitleViewSet(viewsets.ModelViewSet):
+    queryset = Title.objects.all()
+    serializer_class = TitleSerializer
+    permission_classes = (IsAdminUserOrReadOnly,)
+    filter_backends = (SearchFilter, )
+

@@ -10,10 +10,12 @@ from rest_framework.response import Response
 from rest_framework.filters import SearchFilter
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from django_filters.rest_framework import DjangoFilterBackend
 
 from api.mixins import ModelMixinSet
 from api.permissions import IsAdminUserOrReadOnly, IsAdmin
 from review.models import User, Category, Genre, Title
+from api.filters import TitleFilter
 
 from api.serializers import (GenreSerializer, CategorySerializer, AdminUsersSerializer, NotAdminUsersSerializer,
                              TitleSerializer, SignUpSerializer, GetTokenSerializer, ReviewSerializer, CommentSerializer,
@@ -132,9 +134,9 @@ class TitleViewSet(viewsets.ModelViewSet):
     ).all()
     serializer_class = TitleSerializer
     permission_classes = (IsAdminUserOrReadOnly,)
-    filter_backends = (SearchFilter, )
+    filter_backends = (DjangoFilterBackend, )
     pagination_class = LimitOffsetPagination
-    search_fields = ('name', 'genre__slug', )
+    filterset_class = TitleFilter
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):

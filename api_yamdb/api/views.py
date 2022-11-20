@@ -11,8 +11,10 @@ from rest_framework.permissions import IsAuthenticated
 
 from api.permissions import IsAdminUserOrReadOnly, IsAdmin
 from review.models import User, Category, Genre, Title
+
 from api.serializers import (GenreSerializer, CategorySerializer, AdminUsersSerializer, NotAdminUsersSerializer,
-                             TitleSerializer, SignUpSerializer, GetTokenSerializer)
+                             TitleSerializer, SignUpSerializer, GetTokenSerializer, ReviewSerializer, CommentSerializer)
+
 
 
 
@@ -122,3 +124,32 @@ class TitleViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminUserOrReadOnly,)
     filter_backends = (SearchFilter, )
 
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    """View представления оценок."""
+    serializer_class = ReviewSerializer
+    permission_classes = (IsAdminUserOrReadOnly,)
+
+    def get_title(self):
+        return get_object_or_404(Title, id=self.kwargs.get("title_id"))
+
+    def receive_queryset(self):
+        return self.get_title().reviews.all()
+
+    def execute_generate(self, serializer):
+        serializer.save(author=self.request.user, title=self.get_title())
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    """View представления комментариев."""
+    serializer_class = CommentSerializer
+    permission_classes = (IsAdminUserOrReadOnly,)
+
+    def get_review(self):
+        return get_object_or_404(Review, id=self.kwargs.get('review_id'))
+
+    def receive_queryset(self):
+        return self.get_review().comments.all()
+
+    def execute_generate(self, serializer):
+        serializer.save(author=self.request.user, review=self.get_review())

@@ -99,7 +99,7 @@ class General_Model_Review_Comments(models.Model):
         ordering = ('pub_date',)
 
     def __str__(self):
-        return self.text[30]
+        return self.text
 
 
 class Review(General_Model_Review_Comments):
@@ -113,9 +113,9 @@ class Review(General_Model_Review_Comments):
         default=1,
         validators=[
             MinValueValidator(limit_value=1,
-                              message='Минимальное значение рейтинга - 1'),
+                              message='Минимальный рейтинг - 1'),
             MaxValueValidator(limit_value=10,
-                              message='Максимальное значение рейтинга - 10')
+                              message='Максимальный рейтинг - 10')
         ],
     )
 
@@ -130,6 +130,7 @@ class Review(General_Model_Review_Comments):
             )
         ]
 
+
 class Comments(General_Model_Review_Comments):
     review = models.ForeignKey(
         Review,
@@ -143,6 +144,4 @@ class Comments(General_Model_Review_Comments):
         default_related_name = "comments"
 
     def __str__(self):
-        return self.text[30]
-
-
+        return self.text

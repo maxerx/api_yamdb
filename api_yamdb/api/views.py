@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from django.core.mail import EmailMessage
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework.views import APIView
+from django.db.models import Avg
 from rest_framework import permissions, status, viewsets
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework_simplejwt.tokens import AccessToken
@@ -15,7 +16,8 @@ from api.permissions import IsAdminUserOrReadOnly, IsAdmin
 from review.models import User, Category, Genre, Title
 
 from api.serializers import (GenreSerializer, CategorySerializer, AdminUsersSerializer, NotAdminUsersSerializer,
-                             TitleSerializer, SignUpSerializer, GetTokenSerializer, ReviewSerializer, CommentSerializer)
+                             TitleSerializer, SignUpSerializer, GetTokenSerializer, ReviewSerializer, CommentSerializer,
+                             TitleWriteSerializer)
 
 
 
@@ -111,6 +113,7 @@ class GenreViewSet(ModelMixinSet):
     filter_backends = (SearchFilter,)
     search_fields = ('name', )
     pagination_class = LimitOffsetPagination
+    lookup_field = 'slug'
 
 
 class CategoryViewSet(ModelMixinSet):
@@ -120,14 +123,25 @@ class CategoryViewSet(ModelMixinSet):
     filter_backends = (SearchFilter,)
     search_fields = ('name', )
     pagination_class = LimitOffsetPagination
+    lookup_field = 'slug'
 
 
-class TitleViewSet(ModelMixinSet):
-    queryset = Title.objects.all()
+class TitleViewSet(viewsets.ModelViewSet):
+    queryset = Title.objects.annotate(
+        rating=Avg('reviews__score')
+    ).all()
     serializer_class = TitleSerializer
     permission_classes = (IsAdminUserOrReadOnly,)
     filter_backends = (SearchFilter, )
     pagination_class = LimitOffsetPagination
+    search_fields = ('name', 'genre__slug', )
+
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return TitleSerializer
+        return TitleWriteSerializer
+
+
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

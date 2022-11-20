@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.core.mail import EmailMessage
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework.views import APIView
@@ -6,10 +6,12 @@ from rest_framework import permissions, status, viewsets
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.response import Response
 from rest_framework.filters import SearchFilter
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 
-from api.permissions import IsAdminUserOrReadOnly
+from api.permissions import IsAdminUserOrReadOnly, IsAdmin
 from review.models import User, Category, Genre, Title
-from api.serializers import (GenreSerializer, CategorySerializer,
+from api.serializers import (GenreSerializer, CategorySerializer, AdminUsersSerializer, NotAdminUsersSerializer,
                              TitleSerializer, SignUpSerializer, GetTokenSerializer)
 
 
@@ -69,6 +71,34 @@ class APISignup(APIView):
         self.send_email(data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+class UsersViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = AdminUsersSerializer
+    permission_classes = (IsAuthenticated, IsAdmin)
+    lookup_field = 'username'
+    filter_backends = (SearchFilter, )
+    search_fields = ('username', )
+
+
+    @action(methods=['GET', 'PATCH'], detail=False, permission_classes=(permissions.IsAuthenticated,), url_path='me')
+    def get_current_user_info(self, request):
+        serializer = AdminUsersSerializer(request.user)
+        if request.method == 'PATCH':
+            if request.user.role == 'admin':
+                serializer = AdminUsersSerializer(
+                    request.user,
+                    data=request.data,
+                    partial=True)
+            else:
+                serializer = NotAdminUsersSerializer(
+                    request.user,
+                    data=request.data,
+                    partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data)
 
 class GenreViewSet(viewsets.ModelViewSet):
     quereset = Genre.objects.all()

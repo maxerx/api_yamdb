@@ -17,7 +17,12 @@ class User(AbstractUser):
             choices=ROLES,
             default='user'
         )
+    bio = models.TextField(
+        'биография',
+        blank=True,
+    )
     email = models.EmailField('email address', blank=False, unique=True)
+    password = models.CharField('password', blank = True, max_length=128)
 
     class Meta:
         verbose_name = "Пользователь"

@@ -29,6 +29,23 @@ class SignUpSerializer(serializers.ModelSerializer):
         return data
 
 
+class AdminUsersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            'username', 'email', 'first_name',
+            'last_name', 'role')
+
+
+class NotAdminUsersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            'username', 'email', 'first_name',
+            'last_name', 'role')
+        read_only_fields = ('role',)
+
+
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre

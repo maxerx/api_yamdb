@@ -3,12 +3,14 @@ from django.core.mail import EmailMessage
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework.views import APIView
 from rest_framework import permissions, status, viewsets
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.response import Response
 from rest_framework.filters import SearchFilter
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 
+from api.mixins import ModelMixinSet
 from api.permissions import IsAdminUserOrReadOnly, IsAdmin
 from review.models import User, Category, Genre, Title
 
@@ -102,27 +104,30 @@ class UsersViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.data)
 
-class GenreViewSet(viewsets.ModelViewSet):
-    quereset = Genre.objects.all()
+class GenreViewSet(ModelMixinSet):
+    queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = (IsAdminUserOrReadOnly,)
     filter_backends = (SearchFilter,)
     search_fields = ('name', )
+    pagination_class = LimitOffsetPagination
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
-    quereset = Category.objects.all()
+class CategoryViewSet(ModelMixinSet):
+    queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = (IsAdminUserOrReadOnly,)
     filter_backends = (SearchFilter,)
     search_fields = ('name', )
+    pagination_class = LimitOffsetPagination
 
 
-class TitleViewSet(viewsets.ModelViewSet):
+class TitleViewSet(ModelMixinSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
     permission_classes = (IsAdminUserOrReadOnly,)
     filter_backends = (SearchFilter, )
+    pagination_class = LimitOffsetPagination
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

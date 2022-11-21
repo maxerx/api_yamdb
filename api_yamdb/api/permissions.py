@@ -23,7 +23,9 @@ class IsAdminModeratorAuthorOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        return request.user.role == 'admin' or request.user.role == 'moderator' or obj.author == request.user
+        return (request.user.role == 'admin'
+                or request.user.role == 'moderator'
+                or obj.author == request.user)
 
 
 class IsAdmin(permissions.BasePermission):

@@ -3,6 +3,7 @@ from django.core.mail import EmailMessage
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework.views import APIView
 from django.db.models import Avg
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, status, viewsets
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework_simplejwt.tokens import AccessToken
@@ -11,9 +12,10 @@ from rest_framework.filters import SearchFilter
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 
+from api.filters import TitleFilter
 from api.mixins import ModelMixinSet
-from api.permissions import IsAdminUserOrReadOnly, IsAdmin
-from review.models import User, Category, Genre, Title
+from api.permissions import IsAdminUserOrReadOnly, IsAdmin, IsAdminModeratorAuthorOrReadOnly
+from reviews.models import User, Category, Genre, Title, Review, Comments
 
 from api.serializers import (GenreSerializer, CategorySerializer, AdminUsersSerializer, NotAdminUsersSerializer,
                              TitleSerializer, SignUpSerializer, GetTokenSerializer, ReviewSerializer, CommentSerializer,
@@ -85,7 +87,7 @@ class UsersViewSet(viewsets.ModelViewSet):
     lookup_field = 'username'
     filter_backends = (SearchFilter, )
     search_fields = ('username', )
-
+    pagination_class = LimitOffsetPagination
 
     @action(methods=['GET', 'PATCH'], detail=False, permission_classes=(permissions.IsAuthenticated,), url_path='me')
     def get_current_user_info(self, request):
@@ -132,9 +134,10 @@ class TitleViewSet(viewsets.ModelViewSet):
     ).all()
     serializer_class = TitleSerializer
     permission_classes = (IsAdminUserOrReadOnly,)
-    filter_backends = (SearchFilter, )
+    filter_backends = (DjangoFilterBackend,)
     pagination_class = LimitOffsetPagination
-    search_fields = ('name', 'genre__slug', )
+    filterset_class = TitleFilter
+ 
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
@@ -142,33 +145,32 @@ class TitleViewSet(viewsets.ModelViewSet):
         return TitleWriteSerializer
 
 
-
-
 class ReviewViewSet(viewsets.ModelViewSet):
-    """View представления оценок."""
     serializer_class = ReviewSerializer
-    permission_classes = (IsAdminUserOrReadOnly,)
+    permission_classes = (permissions.AllowAny, IsAdminModeratorAuthorOrReadOnly,)
 
-    def get_title(self):
-        return get_object_or_404(Title, id=self.kwargs.get("title_id"))
+    def get_queryset(self):
+        title_id = self.kwargs.get('title_id')
+        title = get_object_or_404(Title, id=title_id)
+        #review = get_object_or_404(Review, title=title)
+        return title.reviews.all()
 
-    def receive_queryset(self):
-        return self.get_title().reviews.all()
-
-    def execute_generate(self, serializer):
-        serializer.save(author=self.request.user, title=self.get_title())
+    def perform_create(self, serializer):
+        title_id = self.kwargs.get('title_id')
+        title = get_object_or_404(Title, id=title_id)
+        serializer.save(author=self.request.user, title=title)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    """View представления комментариев."""
     serializer_class = CommentSerializer
-    permission_classes = (IsAdminUserOrReadOnly,)
+    permission_classes = (IsAdminModeratorAuthorOrReadOnly,)
 
-    def get_review(self):
-        return get_object_or_404(Review, id=self.kwargs.get('review_id'))
+    def get_queryset(self):
+        review_id = self.kwargs.get('review_id')
+        review = get_object_or_404(Review, id=review_id)
+        return review.comments.all()
 
-    def receive_queryset(self):
-        return self.get_review().comments.all()
-
-    def execute_generate(self, serializer):
-        serializer.save(author=self.request.user, review=self.get_review())
+    def perform_create(self, serializer):
+        review_id = self.kwargs.get('review_id')
+        review = get_object_or_404(Review, id=review_id)
+        serializer.save(author=self.request.user, review=review)

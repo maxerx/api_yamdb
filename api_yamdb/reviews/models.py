@@ -38,7 +38,7 @@ class Category(models.Model):
         verbose_name_plural = "Категории"
 
     def __str__(self):
-        return f'{self.name} {self.name}'
+        return f'{self.name}'
 
 
 
@@ -51,7 +51,7 @@ class Genre(models.Model):
         verbose_name_plural = "Жанры"
 
     def __str__(self):
-        return f'{self.name} {self.name}'
+        return f'{self.name}'
 
 
 class Title(models.Model):
@@ -70,7 +70,7 @@ class Title(models.Model):
         related_name='titles',
         verbose_name='категория',
         null=True,
-        blank=True
+        blank=False
     )
     description = models.TextField(
         'описание',
@@ -115,6 +115,7 @@ class Review(General_Model_Review_Comments):
         Title,
         on_delete=models.CASCADE,
         verbose_name='Произведение',
+        related_name='reviews'
     )
     score = models.IntegerField(
         'Оценка',
@@ -144,6 +145,7 @@ class Comments(General_Model_Review_Comments):
         Review,
         on_delete=models.CASCADE,
         verbose_name='Отзыв',
+        related_name='comments'
     )
 
     class Meta(General_Model_Review_Comments.Meta):

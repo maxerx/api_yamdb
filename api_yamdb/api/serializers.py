@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from django.core.validators import MaxValueValidator, MinValueValidator
 
-from review.models import Category, Comments, Genre, Review, Title, User
+from reviews.models import Category, Comments, Genre, Review, Title, User
 
 
 class GetTokenSerializer(serializers.ModelSerializer):
@@ -71,7 +71,7 @@ class TitleSerializer(serializers.ModelSerializer):
         read_only = True,
         many = True
     )
-    raiting = serializers.IntegerField(read_only=True)
+    rating = serializers.IntegerField(read_only=True)
 
     class Meta:
         fields = '__all__'
@@ -94,7 +94,6 @@ class TitleWriteSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    """Serializer отзывов и оценок"""
     author = serializers.SlugRelatedField(
         read_only=True,
         slug_field='username'
@@ -107,12 +106,10 @@ class ReviewSerializer(serializers.ModelSerializer):
     ])
 
     def validate(self, data):
-        """Валидация отзыва и оценки"""
         if self.context.get('request').method == 'POST':
             author = self.context.get('request').user
             title_id = self.context.get('view').kwargs.get('title_id')
-            title = get_object_or_404(Title, id=title_id)
-            if Review.objects.filter(title_id=title.id,
+            if Review.objects.filter(title_id=title_id,
                                      author=author).exists():
                 raise ValidationError('Отзыв уже есть!')
         return data
@@ -123,7 +120,6 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    """Serializer комментариев"""
     author = serializers.SlugRelatedField(
         read_only=True,
         slug_field='username'

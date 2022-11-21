@@ -1,28 +1,27 @@
-from django.shortcuts import render, get_object_or_404
-from django.core.mail import EmailMessage
 from django.contrib.auth.tokens import default_token_generator
-from rest_framework.views import APIView
+from django.core.mail import EmailMessage
 from django.db.models import Avg
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, status, viewsets
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework_simplejwt.tokens import AccessToken
-from rest_framework.response import Response
-from rest_framework.filters import SearchFilter
 from rest_framework.decorators import action
+from rest_framework.filters import SearchFilter
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
-from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import AccessToken
+from reviews.models import Category, Genre, Review, Title, User
 
-from api.filters import TitleFilter
-from api.mixins import ModelMixinSet
-
-from api.permissions import IsAdminUserOrReadOnly, IsAdmin, IsAdminModeratorAuthorOrReadOnly
-from reviews.models import User, Category, Genre, Title, Review, Comments
-from api.serializers import (GenreSerializer, CategorySerializer, AdminUsersSerializer, NotAdminUsersSerializer,
-                             TitleSerializer, SignUpSerializer, GetTokenSerializer, ReviewSerializer, CommentSerializer,
-                             TitleWriteSerializer)
-
-
+from .filters import TitleFilter
+from .mixins import ModelMixinSet
+from .permissions import (IsAdmin, IsAdminModeratorAuthorOrReadOnly,
+                          IsAdminUserOrReadOnly)
+from .serializers import (AdminUsersSerializer, CategorySerializer,
+                          CommentSerializer, GenreSerializer,
+                          GetTokenSerializer, NotAdminUsersSerializer,
+                          ReviewSerializer, SignUpSerializer, TitleSerializer,
+                          TitleWriteSerializer)
 
 
 class APIGetToken(APIView):
@@ -90,7 +89,9 @@ class UsersViewSet(viewsets.ModelViewSet):
     search_fields = ('username', )
     pagination_class = LimitOffsetPagination
 
-    @action(methods=['GET', 'PATCH'], detail=False, permission_classes=(permissions.IsAuthenticated,), url_path='me')
+    @action(methods=['GET', 'PATCH'], detail=False,
+            permission_classes=(permissions.IsAuthenticated,),
+            url_path='me')
     def get_current_user_info(self, request):
         serializer = AdminUsersSerializer(request.user)
         if request.method == 'PATCH':
@@ -108,6 +109,7 @@ class UsersViewSet(viewsets.ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.data)
+
 
 class GenreViewSet(ModelMixinSet):
     queryset = Genre.objects.all()
@@ -139,7 +141,6 @@ class TitleViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
     filterset_class = TitleFilter
 
-
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
             return TitleSerializer
@@ -148,12 +149,12 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (permissions.AllowAny, IsAdminModeratorAuthorOrReadOnly,)
+    permission_classes = (permissions.AllowAny,
+                          IsAdminModeratorAuthorOrReadOnly,)
 
     def get_queryset(self):
         title_id = self.kwargs.get('title_id')
         title = get_object_or_404(Title, id=title_id)
-        #review = get_object_or_404(Review, title=title)
         return title.reviews.all()
 
     def perform_create(self, serializer):

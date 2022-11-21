@@ -1,9 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from django.core.validators import MaxValueValidator, MinValueValidator
-
 from reviews.models import Category, Comments, Genre, Review, Title, User
 
 
@@ -20,12 +17,13 @@ class GetTokenSerializer(serializers.ModelSerializer):
             'confirmation_code'
         )
 
+
 class SignUpSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
         fields = ('email', 'username')
-    
+
     def validate(self, data):
         if data['username'] == "me":
             raise serializers.ValidationError(
@@ -46,7 +44,7 @@ class NotAdminUsersSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'username', 'email', 'first_name',
-            'last_name', 'bio' ,'role')
+            'last_name', 'bio', 'role')
         read_only_fields = ('role',)
 
 
@@ -65,17 +63,19 @@ class CategorySerializer(serializers.ModelSerializer):
         exclude = ('id', )
         lookup_field = 'slug'
 
+
 class TitleSerializer(serializers.ModelSerializer):
     category = CategorySerializer()
     genre = GenreSerializer(
-        read_only = True,
-        many = True
+        read_only=True,
+        many=True
     )
     rating = serializers.IntegerField(read_only=True)
 
     class Meta:
         fields = '__all__'
         model = Title
+
 
 class TitleWriteSerializer(serializers.ModelSerializer):
     category = serializers.SlugRelatedField(

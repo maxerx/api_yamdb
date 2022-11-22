@@ -22,9 +22,12 @@ router.register(
     basename='reviews'
 )
 
+extra_patterns = [
+    path('auth/signup/', APISignup.as_view(), name='signup'),
+    path('auth/token/', APIGetToken.as_view(), name='get_token'),
+]
 
 urlpatterns = [
-    path('v1/auth/signup/', APISignup.as_view(), name='signup'),
-    path('v1/auth/token/', APIGetToken.as_view(), name='get_token'),
+    path('v1/', include(extra_patterns)),
     path('v1/', include(router.urls))
 ]

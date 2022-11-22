@@ -1,55 +1,31 @@
-from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from users.models import User
 
 from .validators import validator_title_year
 
 
-class User(AbstractUser):
-    ROLES = (
-        ('user', 'Обычный пользователь'),
-        ('moderator', 'Модератор'),
-        ('admin', 'Администратор'),
-    )
-    role = models.CharField(
-        'Пользовательская роль',
-        max_length=30,
-        help_text='Администратор, модератор или обычный пользователь.'
-        'По умолчанию `user`.',
-        choices=ROLES,
-        default='user'
-    )
-    bio = models.TextField(
-        'биография',
-        blank=True,
-    )
-    email = models.EmailField('email address', blank=False, unique=True)
-    password = models.CharField('password', blank=True, max_length=128)
-
-    class Meta:
-        verbose_name = "Пользователь"
-        verbose_name_plural = "Пользователи"
-
-
 class Category(models.Model):
-    name = models.CharField(max_length=200, verbose_name="Название")
-    slug = models.SlugField(unique=True, verbose_name="Адрес")
+    name = models.CharField(max_length=200, verbose_name='Название')
+    slug = models.SlugField(unique=True, verbose_name='Адрес')
 
     class Meta:
-        verbose_name = "Категория"
-        verbose_name_plural = "Категории"
+        ordering = ['name']
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
 
     def __str__(self):
         return f'{self.name}'
 
 
 class Genre(models.Model):
-    name = models.CharField(max_length=200, verbose_name="Название")
-    slug = models.SlugField(unique=True, blank=True, verbose_name="Адрес")
+    name = models.CharField(max_length=200, verbose_name='Название')
+    slug = models.SlugField(unique=True, blank=True, verbose_name='Адрес')
 
     class Meta:
-        verbose_name = "Жанр"
-        verbose_name_plural = "Жанры"
+        ordering = ['name']
+        verbose_name = 'Жанр'
+        verbose_name_plural = 'Жанры'
 
     def __str__(self):
         return f'{self.name}'
@@ -61,9 +37,10 @@ class Title(models.Model):
         max_length=200,
         db_index=True
     )
-    year = models.IntegerField(
+    year = models.PositiveIntegerField(
         'год',
-        validators=(validator_title_year, )
+        validators=(validator_title_year, ),
+        db_index=True
     )
     category = models.ForeignKey(
         Category,
@@ -86,8 +63,9 @@ class Title(models.Model):
     )
 
     class Meta:
-        verbose_name = "Произведение"
-        verbose_name_plural = "Произведения"
+        ordering = ['category']
+        verbose_name = 'Произведение'
+        verbose_name_plural = 'Произведения'
 
     def __str__(self):
         return self.name
@@ -105,7 +83,7 @@ class GeneralModelReviewComments(models.Model):
 
     class Meta:
         abstract = True
-        ordering = ('pub_date',)
+        ordering = ['pub_date']
 
     def __str__(self):
         return self.text
@@ -118,7 +96,7 @@ class Review(GeneralModelReviewComments):
         verbose_name='Произведение',
         related_name='reviews'
     )
-    score = models.IntegerField(
+    score = models.PositiveIntegerField(
         'Оценка',
         default=1,
         validators=[
@@ -152,7 +130,7 @@ class Comments(GeneralModelReviewComments):
     class Meta(GeneralModelReviewComments.Meta):
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
-        default_related_name = "comments"
+        default_related_name = 'comments'
 
     def __str__(self):
         return self.text

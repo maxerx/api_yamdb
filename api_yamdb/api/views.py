@@ -1,5 +1,5 @@
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import EmailMessage
+from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -11,7 +11,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
-from reviews.models import Category, Genre, Review, Title, User
+from api_yamdb.settings import DOMAIN_MAME
+from reviews.models import Category, Genre, Review, Title
+from users.models import User
 
 from .filters import TitleFilter
 from .mixins import ModelMixinSet
@@ -34,7 +36,7 @@ class APIGetToken(APIView):
         data = serializer.validated_data
         confirmation_code = data['confirmation_code']
         try:
-            user = User.objects.get(username=data['username'])
+            user = get_object_or_404(User, username=data['username'])
         except User.DoesNotExist:
             return Response(
                 {'username': 'Пользователь не найден!'},
@@ -53,30 +55,16 @@ class APISignup(APIView):
 
     permission_classes = (permissions.AllowAny,)
 
-    @staticmethod
-    def send_email(data):
-        email = EmailMessage(
-            subject=data['email_subject'],
-            body=data['email_body'],
-            to=[data['to_email']]
-        )
-        email.send()
-
     def post(self, request):
         serializer = SignUpSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         key = default_token_generator.make_token(user)
 
-        email_body = (
-            f'\nКод подтверждения: {key}'
-        )
-        data = {
-            'email_body': email_body,
-            'to_email': user.email,
-            'email_subject': 'Код подтверждения для доступа к API!'
-        }
-        self.send_email(data)
+        email_subject = 'Код подтверждения для доступа к API!'
+        email_body = f'Код подтверждения: {key}'
+        from_email = f'security@{DOMAIN_MAME}'
+        send_mail(email_subject, email_body, from_email, [user.email, ])
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -168,11 +156,15 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminModeratorAuthorOrReadOnly,)
 
     def get_queryset(self):
-        review_id = self.kwargs.get('review_id')
-        review = get_object_or_404(Review, id=review_id)
+        review_id = self.kwargs.get('review_id') 
+        title_id = self.kwargs.get('title_id') 
+        title = get_object_or_404(Title, id=title_id)
+        review = get_object_or_404(Review, id=review_id, title=title)
         return review.comments.all()
 
     def perform_create(self, serializer):
         review_id = self.kwargs.get('review_id')
-        review = get_object_or_404(Review, id=review_id)
+        title_id = self.kwargs.get('title_id')
+        title = get_object_or_404(Title, id=title_id)
+        review = get_object_or_404(Review, id=review_id, title=title)
         serializer.save(author=self.request.user, review=review)

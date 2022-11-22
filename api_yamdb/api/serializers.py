@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 from reviews.models import Category, Comments, Genre, Review, Title, User
 
 
@@ -23,9 +24,17 @@ class SignUpSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('email', 'username')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=User.objects.all(),
+                fields=['username', 'email'],
+                message=(
+                    'Пользователь с таким usernamе или email уже существует'
+                )
+            )]
 
     def validate(self, data):
-        if data['username'] == "me":
+        if data['username'] == 'me':
             raise serializers.ValidationError(
                 'Нельзя использовать в качестве имени Me')
         return data

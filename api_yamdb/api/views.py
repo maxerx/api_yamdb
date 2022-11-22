@@ -156,8 +156,8 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminModeratorAuthorOrReadOnly,)
 
     def get_queryset(self):
-        review_id = self.kwargs.get('review_id') 
-        title_id = self.kwargs.get('title_id') 
+        review_id = self.kwargs.get('review_id')
+        title_id = self.kwargs.get('title_id')
         title = get_object_or_404(Title, id=title_id)
         review = get_object_or_404(Review, id=review_id, title=title)
         return review.comments.all()
